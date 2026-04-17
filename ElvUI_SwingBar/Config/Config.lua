@@ -1,7 +1,7 @@
 local E, _, V, P, G = unpack(ElvUI)
-local L = E.Libs.ACL:GetLocale("ElvUI", E.global.general.locale)
+local L = E.Libs.ACL and E.Libs.ACL:GetLocale("ElvUI", E.global.general.locale) or {}
 local SB = E:GetModule("SwingBar")
-local UF = E:GetModule("UnitFrames")
+local UF
 
 local positionValues = {
 	TOP = L["Top"],
