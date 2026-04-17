@@ -1,6 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local LPB = E:NewModule("LocationPlus", "AceTimer-3.0")
-local DT = E:GetModule("DataTexts")
+local DT
 local LSM = LibStub("LibSharedMedia-3.0")
 local EP = LibStub("LibElvUIPlugin-1.0")
 
@@ -38,17 +38,12 @@ LPB.version = GetAddOnMetadata("ElvUI_LocPlus", "Version")
 
 if E.db.locplus == nil then E.db.locplus = {} end
 
-do
-	DT:RegisterPanel(LeftCoordDtPanel, 1, "ANCHOR_BOTTOM", 0, -4)
-	DT:RegisterPanel(RightCoordDtPanel, 1, "ANCHOR_BOTTOM", 0, -4)
+L["RightCoordDtPanel"] = L["LocationPlus Right Panel"]
+L["LeftCoordDtPanel"] = L["LocationPlus Left Panel"]
 
-	L["RightCoordDtPanel"] = L["LocationPlus Right Panel"]
-	L["LeftCoordDtPanel"] = L["LocationPlus Left Panel"]
-
-	-- Setting default datatexts
-	P.datatexts.panels.RightCoordDtPanel = "Time"
-	P.datatexts.panels.LeftCoordDtPanel = "Durability"
-end
+-- Setting default datatexts
+P.datatexts.panels.RightCoordDtPanel = "Time"
+P.datatexts.panels.LeftCoordDtPanel = "Durability"
 
 local SPACING = 1
 
@@ -757,6 +752,11 @@ f:SetScript("OnEvent",function(self, event)
 end)
 
 function LPB:Initialize()
+	DT = E:GetModule("DataTexts")
+
+	DT:RegisterPanel(LeftCoordDtPanel, 1, "ANCHOR_BOTTOM", 0, -4)
+	DT:RegisterPanel(RightCoordDtPanel, 1, "ANCHOR_BOTTOM", 0, -4)
+
 	self:LocPlusDefaults()
 	CreateLocPanel()
 	CreateDTPanels()
