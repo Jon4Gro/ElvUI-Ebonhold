@@ -1,6 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local UFDP = E:NewModule("Enhanced_DetachedPortrait", "AceHook-3.0")
-local UF = E:GetModule("UnitFrames")
+local UF
 
 local function Configure_Portrait(self, frame)
 	if frame.unitframeType == "player" or frame.unitframeType == "target" then
@@ -69,6 +69,7 @@ function UFDP:Initialize()
 	if not E.private.unitframe.enable then return end
 	if not (E.db.enhanced.unitframe.detachPortrait.player.enable or E.db.enhanced.unitframe.detachPortrait.target.enable) then return end
 
+	UF = E:GetModule("UnitFrames")
 	self:ToggleState()
 end
 

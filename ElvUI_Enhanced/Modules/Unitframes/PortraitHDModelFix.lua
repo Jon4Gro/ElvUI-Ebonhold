@@ -1,6 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local UFPM = E:NewModule("Enhanced_PortraitHDModelFix", "AceHook-3.0")
-local UF = E:GetModule("UnitFrames")
+local UF
 
 local _G = _G
 local ipairs = ipairs
@@ -116,6 +116,7 @@ end
 function UFPM:Initialize()
 	if not E.private.unitframe.enable then return end
 
+	UF = E:GetModule("UnitFrames")
 	self.modelsToFix = {}
 	self.HDModelFound = checkHDModels()
 

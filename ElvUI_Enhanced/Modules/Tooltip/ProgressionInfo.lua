@@ -1,6 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local PI = E:NewModule("Enhanced_ProgressionInfo", "AceHook-3.0", "AceEvent-3.0")
-local TT = E:GetModule("Tooltip")
+local TT
 
 local pairs, ipairs, select, tonumber = pairs, ipairs, select, tonumber
 local format = string.format
@@ -361,6 +361,7 @@ end
 function PI:Initialize()
 	if not E.db.enhanced.tooltip.progressInfo.enable then return end
 
+	TT = E:GetModule("Tooltip")
 	self.progressCache = progressCache
 	self:ToggleState()
 end
