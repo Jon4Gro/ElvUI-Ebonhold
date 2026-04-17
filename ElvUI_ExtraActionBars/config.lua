@@ -1,6 +1,6 @@
 local E, L, V, P, G, _ = unpack(ElvUI)
 local EAB = E:NewModule("ExtraActionBars", "AceEvent-3.0")
-local AB = E:GetModule("ActionBars")
+local AB
 
 local points = {
 	["TOPLEFT"] = "TOPLEFT",
