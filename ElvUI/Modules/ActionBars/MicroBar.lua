@@ -3,7 +3,7 @@ local AB = E:GetModule("ActionBars")
 
 --Lua functions
 local _G = _G
-local unpack = unpack
+local pairs, select, unpack = pairs, select, unpack
 local gsub, match = string.gsub, string.match
 --WoW API / Variables
 local CreateFrame = CreateFrame
@@ -17,14 +17,12 @@ local MICRO_BUTTONS = {
 	"AchievementMicroButton",
 	"QuestLogMicroButton",
 	"SocialsMicroButton",
-	"PVPMicroButton",
+	"EchoJournalMicroButton",
 	"LFDMicroButton",
 	"MainMenuMicroButton",
 	"HelpMicroButton",
 	"SkillTreeMicroButton"
 }
-
--- ʕ •ᴥ•ʔ✿ Added SkillTreeMicroButton for Ebonhold ✿ ʕ •ᴥ•ʔ
 
 local function onEnter(button)
 	if AB.db.microbar.mouseover then
@@ -62,57 +60,44 @@ function AB:HandleMicroButton(button)
 		end
 
 		button.SetPoint = function(self, ...)
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalSetPoint(self, ...)
 		end
 
 		button.ClearAllPoints = function(self)
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalClearAllPoints(self)
 		end
 
 		button.SetSize = function(self, ...)
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalSetSize(self, ...)
 		end
 
 		button.SetWidth = function(self, ...)
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalSetWidth(self, ...)
 		end
 
 		button.SetHeight = function(self, ...)
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalSetHeight(self, ...)
 		end
 
 		button.SetParent = function(self, parent)
 			local parentName = parent and (parent:GetName() or "Unnamed") or "nil"
-			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and parentName ~= "ElvUI_Ebonhold_MicroBar" and not self.elvuiAllowChanges then
-				return
-			end
+			if E.db.ebonhold and E.db.ebonhold.blockServerAddon and self:GetParent() == ElvUI_Ebonhold_MicroBar and parentName ~= "ElvUI_Ebonhold_MicroBar" and not self.elvuiAllowChanges then return end
 			self.elvuiOriginalSetParent(self, parent)
 		end
 
 		button.elvuiPositionProtected = true
 	end
 
-	-- ʕ •ᴥ•ʔ✿ If it's already skinned by ElvUI, we're done ✿ ʕ •ᴥ•ʔ
 	if button.isElvUISkinned then return end
 
-	local pushed = button:GetPushedTexture()
-	local normal = button:GetNormalTexture()
-	local disabled = button:GetDisabledTexture()
+	local pushed = button.GetPushedTexture and button:GetPushedTexture() or nil
+	local normal = button.GetNormalTexture and button:GetNormalTexture() or nil
+	local disabled = button.GetDisabledTexture and button:GetDisabledTexture() or nil
 
 	if not button.backdrop then
 		local f = CreateFrame("Frame", nil, button)
@@ -125,24 +110,63 @@ function AB:HandleMicroButton(button)
 	if button.GetHighlightTexture and button:GetHighlightTexture() then
 		button:GetHighlightTexture():Kill()
 	end
+	
 	button:HookScript("OnEnter", onEnter)
 	button:HookScript("OnLeave", onLeave)
 	button:SetHitRectInsets(0, 0, 0, 0)
 	button:Show()
 
-	if pushed then
-		pushed:SetTexCoord(0.17, 0.87, 0.5, 0.908)
-		pushed:SetInside(button.backdrop)
-	end
+	local btnName = button:GetName()
 
-	if normal then
-		normal:SetTexCoord(0.17, 0.87, 0.5, 0.908)
-		normal:SetInside(button.backdrop)
-	end
+	if btnName == "EchoJournalMicroButton" then
+		-- Hide the erroneous background texture entirely
+		if normal then normal:SetTexture(nil); normal:SetAlpha(0) end
+		if pushed then pushed:SetTexture(nil); pushed:SetAlpha(0) end
+		if disabled then disabled:SetTexture(nil); disabled:SetAlpha(0) end
+		
+		local orbTex
+		for _, region in pairs({button:GetRegions()}) do
+			if region:IsObjectType("Texture") and region ~= normal and region ~= pushed and region ~= disabled then
+				local tex = region:GetTexture()
+				if tex and type(tex) == "string" and not match(tex:lower(), "highlight") then
+					region:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+					region:SetInside(button.backdrop)
+					orbTex = region
+				end
+			end
+		end
 
-	if disabled then
-		disabled:SetTexCoord(0.17, 0.87, 0.5, 0.908)
-		disabled:SetInside(button.backdrop)
+		-- Simulate standard button press by darkening the Orb on click
+		if orbTex then
+			button:HookScript("OnMouseDown", function() orbTex:SetVertexColor(0.5, 0.5, 0.5) end)
+			button:HookScript("OnMouseUp", function() orbTex:SetVertexColor(1, 1, 1) end)
+		end
+
+	else
+		-- Ensure Custom SkillTreeMicroButton acts like a standard button and darkens when clicked
+		if btnName == "SkillTreeMicroButton" then
+			if normal and not pushed then
+				button:SetPushedTexture(normal:GetTexture())
+				pushed = button:GetPushedTexture()
+				if pushed then
+					pushed:SetVertexColor(0.5, 0.5, 0.5)
+				end
+			end
+		end
+
+		-- Apply standard ElvUI rectangular crop to all other buttons (including Skill Tree)
+		if pushed then
+			pushed:SetTexCoord(0.17, 0.87, 0.5, 0.908)
+			pushed:SetInside(button.backdrop)
+		end
+		if normal then
+			normal:SetTexCoord(0.17, 0.87, 0.5, 0.908)
+			normal:SetInside(button.backdrop)
+		end
+		if disabled then
+			disabled:SetTexCoord(0.17, 0.87, 0.5, 0.908)
+			disabled:SetInside(button.backdrop)
+		end
 	end
 
 	button.isElvUISkinned = true
@@ -337,16 +361,19 @@ function AB:SetupMicroBar()
 		end
 	end
 
-	MicroButtonPortrait:SetAllPoints()
+	if MicroButtonPortrait then
+		MicroButtonPortrait:SetAllPoints()
+	end
 
-	-- PvP Micro Button
-	PVPMicroButtonTexture:SetAllPoints()
-	PVPMicroButtonTexture:SetTexture([[Interface\AddOns\ElvUI\Media\Textures\PVP-Icons]])
+	if PVPMicroButtonTexture then
+		PVPMicroButtonTexture:SetAllPoints()
+		PVPMicroButtonTexture:SetTexture([[Interface\AddOns\ElvUI\Media\Textures\PVP-Icons]])
 
-	if E.myfaction == "Alliance" then
-		PVPMicroButtonTexture:SetTexCoord(0.545, 0.935, 0.070, 0.940)
-	else
-		PVPMicroButtonTexture:SetTexCoord(0.100, 0.475, 0.070, 0.940)
+		if E.myfaction == "Alliance" then
+			PVPMicroButtonTexture:SetTexCoord(0.545, 0.935, 0.070, 0.940)
+		else
+			PVPMicroButtonTexture:SetTexCoord(0.100, 0.475, 0.070, 0.940)
+		end
 	end
 
 	self:SecureHook("VehicleMenuBar_MoveMicroButtons", "UpdateMicroButtonsParent")
@@ -359,12 +386,14 @@ function AB:SetupMicroBar()
 
 	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 
-	-- ʕ •ᴥ•ʔ✿ Delay updates to catch late-loading server buttons and override other addons ✿ ʕ •ᴥ•ʔ
 	E:Delay(1, AB.UpdateMicroButtonsParent, AB)
 	E:Delay(5, AB.UpdateMicroButtonsParent, AB)
 
 	self:UpdateMicroPositionDimensions()
-	MainMenuBarPerformanceBar:Kill()
+	
+	if MainMenuBarPerformanceBar then
+		MainMenuBarPerformanceBar:Kill()
+	end
 
 	E:CreateMover(microBar, "MicrobarMover", L["Micro Bar"], nil, nil, nil, "ALL,ACTIONBARS", nil, "actionbar,microbar")
 end
