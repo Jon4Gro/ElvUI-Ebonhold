@@ -1,8 +1,8 @@
 ## Interface: 30300
-## Author: Elv, Bunny
-## Version: 6.21
+## Author: Elv, Bunny, Xurkon, Jon4Gro
+## Version: 6.23
 ## Title: |cff1784d1E|r|cffe5e3e3lvUI|r
-## Notes: User Interface replacement AddOn for World of Warcraft.
+## Notes: User Interface replacement AddOn for World of Warcraft-Ebonhold
 ## SavedVariables: ElvDB, ElvPrivateDB
 ## SavedVariablesPerCharacter: ElvCharacterDB
 ## OptionalDeps: Blizzard_DebugTools, SharedMedia, Tukui, ButtonFacade
