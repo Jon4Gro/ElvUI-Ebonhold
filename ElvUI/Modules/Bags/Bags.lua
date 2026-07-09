@@ -1262,6 +1262,32 @@ function B:ContructContainerFrame(name, isBank)
 			end
 		end)
 
+		f.voidStorageButton = CreateFrame("Button", name.."VoidStorageButton", f.holderFrame)
+		f.voidStorageButton:Size(120, 20+ E.Border)
+		f.voidStorageButton:SetTemplate()
+		f.voidStorageButton:Point("RIGHT", f.purchaseBagButton, "LEFT", -5, 23)
+		f.voidStorageButton:StyleButton(nil, true)
+
+		f.voidStorageButton.text = f.voidStorageButton:CreateFontString(nil, "OVERLAY")
+		f.voidStorageButton.text:FontTemplate()
+		f.voidStorageButton.text:SetPoint("CENTER", 0, 0)
+		f.voidStorageButton.text:SetText("Void Storage")
+
+		f.voidStorageButton:SetScript("OnClick", function()
+		local editBox = ChatFrame1EditBox
+		editBox:SetText("/voidstorage")
+			ChatEdit_SendText(editBox)
+			end)
+
+		f:SetScript("OnShow", B.RefreshSearch)
+		f:SetScript("OnHide", function()
+		CloseBankFrame()
+
+		if E.db.bags.clearSearchOnClose then
+			B.ResetAndClear(f.editBox)
+			end
+			end)
+
 		--Search
 		f.editBox = CreateFrame("EditBox", name.."EditBox", f)
 		f.editBox:SetFrameLevel(f.editBox:GetFrameLevel() + 2)
