@@ -1,6 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local SB = E:NewModule("SwingBar")
-local UF
+local UF = E:GetModule("UnitFrames")
 local EP = E.Libs.EP
 
 local addonName = ...
@@ -144,7 +144,7 @@ function UF:Configure_Swingbar(frame)
 end
 
 function SB:Initialize()
-	UF = E:GetModule("UnitFrames")
+
 	EP:RegisterPlugin(addonName, self.InsertOptions)
 
 	ElvUF_Player.Swing = UF:Construct_Swingbar(ElvUF_Player)
