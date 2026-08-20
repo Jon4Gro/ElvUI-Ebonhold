@@ -5,6 +5,7 @@ local S = E:GetModule("Skins")
 local _G = _G
 local getmetatable = getmetatable
 local ipairs = ipairs
+local pairs = pairs
 local select = select
 local unpack = unpack
 --WoW API / Variables
@@ -29,10 +30,59 @@ S:AddCallback("Skin_Character", function()
 	-- CharacterFrame
 	CharacterFrame:StripTextures(true)
 	CharacterFrame:CreateBackdrop("Transparent")
-	CharacterFrame.backdrop:Point("TOPLEFT", 11, -12)
-	CharacterFrame.backdrop:Point("BOTTOMRIGHT", -32, 76)
+	
+	-- Adjusted backdrop to perfectly wrap the new Retail-style backported frame
+	CharacterFrame.backdrop:Point("TOPLEFT", 0, 0)
+	CharacterFrame.backdrop:Point("BOTTOMRIGHT", 0, -4)
 
 	S:SetUIPanelWindowInfo(CharacterFrame, "width")
+
+	-- 1. Intelligently Strip Custom Server "Retail-Style" Frames
+	local function NukeCustomFrames()
+		-- Outer border can be completely hidden
+		if CharacterFrameNineSlice then 
+			CharacterFrameNineSlice:SetAlpha(0) 
+			CharacterFrameNineSlice:Hide()
+		end
+
+		-- Insets MUST NOT be hidden (otherwise gear slots vanish). We just strip their textures.
+		local framesToStrip = {
+			"PaperDollFrameNewPanel",
+			"PaperDollFrameStatsFrame",
+			"PaperDollFrameEquipInset",
+			"CharacterFrameInset",
+			"PetPaperDollFrameInset",
+			"ReputationFrameInset",
+			"SkillFrameInset",
+			"TokenFrameInset"
+		}
+		
+		for _, frameName in pairs(framesToStrip) do
+			local frame = _G[frameName]
+			if frame then
+				if frame.StripTextures then frame:StripTextures(true) end
+				if frame.NineSlice then frame.NineSlice:SetAlpha(0) frame.NineSlice:Hide() end
+				if frame.Bg then frame.Bg:SetAlpha(0) frame.Bg:Hide() end
+			end
+		end
+
+		-- Hide default portrait and rings
+		if CharacterFramePortrait then CharacterFramePortrait:SetAlpha(0) CharacterFramePortrait:Hide() end
+		if CharacterFrame.portrait then CharacterFrame.portrait:SetAlpha(0) CharacterFrame.portrait:Hide() end
+
+		for _, child in pairs({CharacterFrame:GetChildren()}) do
+			if child:GetNumRegions() > 0 then
+				local region = select(1, child:GetRegions())
+				if region and region:IsObjectType("Texture") and region:GetTexture() and type(region:GetTexture()) == "string" then
+					if string.find(region:GetTexture():lower(), "portrait") or string.find(region:GetTexture():lower(), "round") then
+						child:Hide()
+					end
+				end
+			end
+		end
+	end
+
+	NukeCustomFrames()
 
 	S:SetBackdropHitRect(PaperDollFrame, CharacterFrame.backdrop)
 	S:SetBackdropHitRect(PetPaperDollFrame, CharacterFrame.backdrop)
@@ -70,7 +120,10 @@ S:AddCallback("Skin_Character", function()
 	PlayerTitlePickerFrame:StripTextures()
 	PlayerTitlePickerFrame:CreateBackdrop("Transparent")
 	PlayerTitlePickerFrame.backdrop:Point("TOPLEFT", 6, -10)
-	PlayerTitlePickerFrame.backdrop:Point("BOTTOMRIGHT", -13, 6)
+	
+	-- Fix for the massive black box: Anchor the bottom of the backdrop directly to the ScrollFrame 
+	-- instead of the oversized parent frame, so it tightly hugs the text list.
+	PlayerTitlePickerFrame.backdrop:Point("BOTTOMRIGHT", PlayerTitlePickerScrollFrame, "BOTTOMRIGHT", 28, -6)
 	PlayerTitlePickerFrame.backdrop:SetFrameLevel(PlayerTitlePickerFrame:GetFrameLevel())
 
 	S:HandleScrollBar(PlayerTitlePickerScrollFrameScrollBar)
@@ -99,15 +152,10 @@ S:AddCallback("Skin_Character", function()
 	GearManagerToggleButton:Size(25, 29)
 	GearManagerToggleButton:Point("TOPRIGHT", -46, -40)
 	GearManagerToggleButton:CreateBackdrop("Default")
-	-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 64, 64, 40, 46, 13, 10
 	GearManagerToggleButton:GetNormalTexture():SetTexCoord(0.203125, 0.828125, 0.15625, 0.875)
-	-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 64, 64, 40, 46, 12, 12
 	GearManagerToggleButton:GetPushedTexture():SetTexCoord(0.1875, 0.8125, 0.1875, 0.90625)
 	GearManagerToggleButton:GetHighlightTexture():SetTexture(1, 1, 1, 0.3)
 	GearManagerToggleButton:GetHighlightTexture():SetAllPoints()
-
-	PlayerTitleFrame:Point("TOP", CharacterLevelText, "BOTTOM", -7, -7)
-	PlayerTitlePickerFrame:Point("TOPLEFT", PlayerTitleFrame, "BOTTOMLEFT", 14, 26)
 
 	CharacterModelFrame:Size(237, 217)
 	CharacterModelFrame:Point("TOPLEFT", 63, -76)
@@ -219,7 +267,11 @@ S:AddCallback("Skin_Character", function()
 	f:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
 	f:SetScript("OnEvent", updateSlotFrame)
 
-	CharacterFrame:HookScript("OnShow", colorItemBorder)
+	-- Apply the Custom Frame Nuke dynamically every time the frame is shown
+	CharacterFrame:HookScript("OnShow", function()
+		colorItemBorder()
+		NukeCustomFrames()
+	end)
 	colorItemBorder()
 
 	local nStripped = 0
@@ -287,19 +339,14 @@ S:AddCallback("Skin_Character", function()
 			text:Point("CENTER", -1, 0)
 
 			if i == 1 then		-- Arcane
-				-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 32, 256, 18, 18, 8, 64
 				texture:SetTexCoord(0.25, 0.8125, 0.25, 0.3203125)
 			elseif i == 2 then	-- Fire
-				-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 32, 256, 18, 18, 8, 6
 				texture:SetTexCoord(0.25, 0.8125, 0.0234375, 0.09375)
 			elseif i == 3 then	-- Nature
-				-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 32, 256, 18, 18, 8, 35
 				texture:SetTexCoord(0.25, 0.8125, 0.13671875, 0.20703125)
 			elseif i == 4 then	-- Frost
-				-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 32, 256, 18, 18, 8, 94
 				texture:SetTexCoord(0.25, 0.8125, 0.3671875, 0.4375)
 			elseif i == 5 then	-- Shadow
-				-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 32, 256, 18, 18, 8, 122
 				texture:SetTexCoord(0.25, 0.8125, 0.4765625, 0.546875)
 			end
 		end
@@ -435,13 +482,10 @@ S:AddCallback("Skin_Character", function()
 		if not isHunterPet or not happiness then return end
 
 		if happiness == 1 then
-			-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 128, 64, 16, 16, 52, 4
 			self:GetRegions():SetTexCoord(0.40625, 0.53125, 0.0625, 0.3125)
 		elseif happiness == 2 then
-			-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 128, 64, 16, 16, 28, 4
 			self:GetRegions():SetTexCoord(0.21875, 0.34375, 0.0625, 0.3125)
 		elseif happiness == 3 then
-			-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 128, 64, 16, 16, 52, 4
 			self:GetRegions():SetTexCoord(0.03125, 0.15625, 0.0625, 0.3125)
 		end
 	end
@@ -458,7 +502,6 @@ S:AddCallback("Skin_Character", function()
 	PetPaperDollPetInfo:CreateBackdrop("Default")
 	PetPaperDollPetInfo:Size(25)
 	PetPaperDollPetInfo:Point("TOPLEFT", PetModelFrameRotateLeftButton, "BOTTOMLEFT", 10, -4)
-	-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 128, 64, 16, 16, 52, 4
 	PetPaperDollPetInfo:GetRegions():SetTexCoord(0.03125, 0.15625, 0.0625, 0.3125)
 
 	PetPaperDollPetInfo:RegisterEvent("UNIT_HAPPINESS")
@@ -757,7 +800,6 @@ S:AddCallback("Skin_Character", function()
 
 						if factionGroup then
 							button.icon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup)
-							-- texWidth, texHeight, cropWidth, cropHeight, offsetX, offsetY = 64, 64, 36, 36, 4, 1
 							button.icon:SetTexCoord(0.0625, 0.625, 0.015625, 0.578125)
 						else
 							button.icon:SetTexCoord(unpack(E.TexCoords))
